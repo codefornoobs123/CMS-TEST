@@ -1,0 +1,35 @@
+{% extends "admin/base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>Users <span class="muted">({{ users|length }})</span></h1>
+  <a class="button primary" href="{{ url_for('user_edit') }}">+ New user</a>
+</div>
+
+<table>
+  <thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Posts</th><th>Last login</th></tr></thead>
+  <tbody>
+  {% for u in users %}
+    <tr class="{{ 'inactive' if not u.is_active }}">
+      <td><a href="{{ url_for('user_edit', user_id=u.id) }}"><strong>{{ u.display_name or u.username }}</strong></a>
+        {% if u.id == user.id %}<span class="muted small">(you)</span>{% endif %}
+        <div class="muted small">{{ u.username }} · {{ u.email }}</div></td>
+      <td>{{ u.role|capitalize }}</td>
+      <td><span class="badge {{ 'published' if u.is_active else 'archived' }}">{{ 'active' if u.is_active else 'disabled' }}</span></td>
+      <td>{{ u.post_count }}</td>
+      <td class="small">{{ u.last_login_at or 'never' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="card roles-help small">
+  <strong>What each role can do</strong>
+  <ul>
+    <li><strong>Admin</strong>: everything, including users and site settings.</li>
+    <li><strong>Editor</strong>: create, edit and delete all pages and posts; manage media and menus.</li>
+    <li><strong>Author</strong>: write and publish their own blog posts; upload images.</li>
+    <li><strong>Viewer</strong>: look around the admin panel without changing anything.</li>
+  </ul>
+</div>
+{% endblock %}

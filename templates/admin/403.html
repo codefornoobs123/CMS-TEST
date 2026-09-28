@@ -1,0 +1,7 @@
+{% extends "admin/base.html" %}
+{% block title %}Not allowed{% endblock %}
+{% block content %}
+<h1>You don't have permission to do that</h1>
+<p>Your account role doesn't allow this. Ask an admin if you need access.</p>
+<p><a href="{{ url_for('dashboard') }}">← Back to the dashboard</a></p>
+{% endblock %}

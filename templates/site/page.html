@@ -1,0 +1,16 @@
+{% extends "site/base.html" %}
+{% block title %}{{ page.meta_title or page.title }} · {{ site.site_title }}{% endblock %}
+{% block meta %}{% if page.meta_description %}<meta name="description" content="{{ page.meta_description }}">{% endif %}{% endblock %}
+{% block content %}
+<article>
+  <h1>{{ page.title }}</h1>
+  {% if page.type == 'post' %}
+    <p class="meta">{{ page.published_at[:10] }}{% if page.author %} · {{ page.author }}{% endif %}</p>
+  {% endif %}
+  {% if page.image_path %}
+    <img class="featured" src="{{ url_for('static', filename=page.image_path) }}" alt="{{ page.image_alt or '' }}">
+  {% endif %}
+  {# Body HTML is cleaned by clean_html() when saved #}
+  <div class="content">{{ page.body|safe }}</div>
+</article>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "site/base.html" %}
+{% block title %}Not found · {{ site.site_title }}{% endblock %}
+{% block content %}
+<h1>Page not found</h1>
+<p>Sorry, that page doesn't exist. <a href="{{ url_for('home') }}">Go home</a></p>
+{% endblock %}

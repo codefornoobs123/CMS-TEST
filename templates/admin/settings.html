@@ -1,0 +1,20 @@
+{% extends "admin/base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Site settings</h1>
+<form method="post" class="card narrow">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label>Site title <input name="site_title" value="{{ s.site_title }}"></label>
+  <label>Tagline <input name="site_tagline" value="{{ s.site_tagline }}"></label>
+  <label>Homepage
+    <select name="homepage_id">
+      <option value="">(Show latest blog posts)</option>
+      {% for p in pages %}
+        <option value="{{ p.id }}" {{ 'selected' if s.homepage_id == p.id|string }}>{{ p.title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Posts per page <input name="posts_per_page" type="number" min="1" max="100" value="{{ s.posts_per_page }}"></label>
+  <button class="primary">Save settings</button>
+</form>
+{% endblock %}

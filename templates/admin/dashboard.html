@@ -1,0 +1,44 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ post_type|capitalize }}s{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>{{ post_type|capitalize }}s <span class="muted">({{ counts.get(post_type, 0) }})</span></h1>
+  {% if can_create(post_type) %}
+    <a class="button primary" href="{{ url_for('edit', post_type=post_type) }}">+ New {{ post_type }}</a>
+  {% endif %}
+</div>
+
+{% if items %}
+<table>
+  <thead><tr><th>Title</th><th>Status</th><th>Author</th><th>Updated</th><th></th></tr></thead>
+  <tbody>
+  {% for p in items %}
+    {% set editable = can_edit(p) %}
+    <tr>
+      <td>
+        {% if editable %}<a href="{{ url_for('edit', post_id=p.id) }}"><strong>{{ p.title }}</strong></a>
+        {% else %}<strong>{{ p.title }}</strong>{% endif %}
+        <div class="muted small">/{{ 'blog/' if p.type == 'post' }}{{ p.slug }}</div></td>
+      <td><span class="badge {{ p.status }}">{{ p.status }}</span></td>
+      <td>{{ p.author }}</td>
+      <td class="small">{{ p.updated_at }}</td>
+      <td class="actions">
+        {% if p.status == 'published' %}
+          <a href="{{ url_for('blog_post' if p.type == 'post' else 'page', slug=p.slug) }}" target="_blank">View</a>
+        {% endif %}
+        {% if editable %}
+        <form method="post" action="{{ url_for('delete', post_id=p.id) }}"
+              onsubmit='return confirm({{ ("Delete “" ~ p.title ~ "”? This cannot be undone.")|tojson }})'>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="link danger">Delete</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No {{ post_type }}s yet.</p>
+{% endif %}
+{% endblock %}

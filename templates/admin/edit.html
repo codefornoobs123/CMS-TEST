@@ -1,0 +1,133 @@
+{% extends "admin/base.html" %}
+{% set is_new = not post_id %}
+{% block title %}{{ 'New ' ~ post_type if is_new else 'Edit ' ~ post.title }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/quill/quill.snow.css') }}">
+{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>{{ 'New ' ~ post_type if is_new else 'Edit ' ~ post_type }}</h1>
+  <a href="{{ url_for('dashboard', type=post_type) }}">← Back to {{ post_type }}s</a>
+</div>
+
+<form method="post" class="editor" id="post-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="main-col">
+    <label>Title <input name="title" value="{{ post.title if post }}" required autofocus></label>
+    <label>URL slug <span class="muted small">(leave blank to generate from the title)</span>
+      <input name="slug" value="{{ post.slug if post }}"></label>
+    <div class="field">
+      <span class="field-label">Content</span>
+      <div id="editor"></div>
+      <textarea name="body" id="body" hidden></textarea>
+    </div>
+    <label>Excerpt <span class="muted small">(short summary shown in lists)</span>
+      <textarea name="excerpt" rows="3">{{ post.excerpt if post and post.excerpt }}</textarea></label>
+  </div>
+
+  <aside class="side-col">
+    <div class="card">
+      <label>Status
+        <select name="status">
+          {% for s in statuses %}
+            <option value="{{ s }}" {{ 'selected' if post and post.status == s }}>{{ s|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button class="primary wide">Save</button>
+      {% if not is_new and post.status == 'published' %}
+        <a class="small" target="_blank"
+           href="{{ url_for('blog_post' if post_type == 'post' else 'page', slug=post.slug) }}">View on site ↗</a>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3>Featured image</h3>
+      {% set current = (post.featured_image_id if post and post.featured_image_id) | string %}
+      <select name="featured_image_id" id="featured-select">
+        <option value="">(None)</option>
+        {% for img in images %}
+          <option value="{{ img.id }}" data-url="{{ media_url(img) }}" {{ 'selected' if current == img.id|string }}>{{ img.filename }}</option>
+        {% endfor %}
+      </select>
+      <img id="featured-preview" class="thumb-preview" alt="" hidden>
+      <p class="small muted">Upload images in <a href="{{ url_for('media') }}">Media</a>.</p>
+    </div>
+
+    <div class="card">
+      <h3>SEO</h3>
+      <label>Meta title <input name="meta_title" value="{{ post.meta_title if post and post.meta_title }}"></label>
+      <label>Meta description
+        <textarea name="meta_description" rows="3">{{ post.meta_description if post and post.meta_description }}</textarea></label>
+    </div>
+
+    {% if revisions %}
+    <div class="card">
+      <h3>Earlier versions</h3>
+      <ul class="small">
+        {% for r in revisions %}<li>{{ r.created_at }}, {{ r.display_name or 'unknown' }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </aside>
+</form>
+
+<script src="{{ url_for('static', filename='vendor/quill/quill.js') }}"></script>
+<script>
+  const quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: 'Start writing…',
+    modules: {
+      toolbar: {
+        container: [
+          [{ header: [2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ list: 'ordered' }, { list: 'bullet' }, 'blockquote'],
+          [{ align: [] }],
+          ['link', 'image'],
+          ['clean'],
+        ],
+        handlers: { image: uploadImage },
+      },
+    },
+  });
+
+  // Load existing content through Quill's parser (never inserted straight into the page)
+  const initial = {{ (post.body if post and post.body else '')|tojson }};
+  quill.setContents(quill.clipboard.convert({ html: initial }), 'silent');
+
+  document.getElementById('post-form').addEventListener('submit', () => {
+    const html = quill.getLength() > 1 ? quill.getSemanticHTML().replaceAll('&nbsp;', ' ') : '';
+    document.getElementById('body').value = html;
+  });
+
+  function uploadImage() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/gif,image/webp';
+    input.onchange = async () => {
+      const data = new FormData();
+      data.append('file', input.files[0]);
+      const res = await fetch('{{ url_for("media_upload", format="json") }}', {
+        method: 'POST', body: data, headers: { 'X-CSRF-Token': '{{ csrf_token }}' },
+      });
+      const json = await res.json().catch(() => ({ error: 'Upload failed.' }));
+      if (!res.ok) return alert(json.error || 'Upload failed.');
+      const range = quill.getSelection(true);
+      quill.insertEmbed(range.index, 'image', json.url, 'user');
+      quill.setSelection(range.index + 1);
+    };
+    input.click();
+  }
+
+  const select = document.getElementById('featured-select');
+  const preview = document.getElementById('featured-preview');
+  function showPreview() {
+    const url = select.selectedOptions[0]?.dataset.url;
+    preview.hidden = !url;
+    if (url) preview.src = url;
+  }
+  select.addEventListener('change', showPreview);
+  showPreview();
+</script>
+{% endblock %}

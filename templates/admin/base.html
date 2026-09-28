@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Admin{% endblock %} · CMS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  {% if user %}
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('dashboard') }}">CMS</a>
+    <nav>
+      <a href="{{ url_for('dashboard', type='page') }}">Pages</a>
+      <a href="{{ url_for('dashboard', type='post') }}">Posts</a>
+      <a href="{{ url_for('media') }}">Media</a>
+      {% if has_role('editor') %}<a href="{{ url_for('menus') }}">Menus</a>{% endif %}
+      {% if has_role('admin') %}
+        <a href="{{ url_for('users') }}">Users</a>
+        <a href="{{ url_for('settings') }}">Settings</a>
+      {% endif %}
+      <a href="{{ url_for('home') }}" target="_blank">View site ↗</a>
+    </nav>
+    <div class="who">
+      <a href="{{ url_for('account') }}">{{ user.display_name or user.username }}</a>
+      <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="link">Log out</button>
+      </form>
+    </div>
+  </header>
+  {% endif %}
+  <main class="{% block main_class %}container{% endblock %}">
+    {% for cat, msg in get_flashed_messages(with_categories=true) %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

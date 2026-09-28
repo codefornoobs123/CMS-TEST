@@ -1,0 +1,63 @@
+{% extends "admin/base.html" %}
+{% block title %}Menus{% endblock %}
+{% block content %}
+<h1>Menus</h1>
+
+<div class="menus">
+{% for menu in menus %}
+  <section class="card">
+    <h3>{{ menu.name }} <span class="muted small">({{ menu.location }})</span></h3>
+
+    {% set list = items[menu.id] %}
+    {% if list %}
+    <ol class="menu-list">
+      {% for i in list %}
+      <li>
+        <form method="post" action="{{ url_for('menu_rename', item_id=i.id) }}" class="rename">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input name="label" value="{{ i.label }}" aria-label="Label">
+          <button class="small">Rename</button>
+        </form>
+        <span class="small muted target">
+          → {% if i.post_id %}{{ i.post_title }}{% if i.post_status != 'published' %} <em>({{ i.post_status }}, hidden)</em>{% endif %}
+            {% else %}{{ i.url }}{% endif %}
+        </span>
+        <span class="item-actions">
+          {% set first, last = loop.first, loop.last %}
+          {% for dir, arrow in [('up', '↑'), ('down', '↓')] %}
+          <form method="post" action="{{ url_for('menu_move', item_id=i.id, direction=dir) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="small" title="Move {{ dir }}"
+              {{ 'disabled' if (dir == 'up' and first) or (dir == 'down' and last) }}>{{ arrow }}</button>
+          </form>
+          {% endfor %}
+          <form method="post" action="{{ url_for('menu_delete', item_id=i.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="link danger small">Remove</button>
+          </form>
+        </span>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+      <p class="muted small">This menu is empty.</p>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('menu_add', menu_id=menu.id) }}" class="add-item">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <strong class="small">Add a link</strong>
+      <select name="target" onchange="this.form.url.hidden = this.value !== 'url'">
+        <option value="">Choose a page or post…</option>
+        {% for t in targets %}
+          <option value="{{ t.id }}">{{ t.type|capitalize }}: {{ t.title }}{% if t.status != 'published' %} ({{ t.status }}){% endif %}</option>
+        {% endfor %}
+        <option value="url">Custom link…</option>
+      </select>
+      <input name="url" placeholder="https://… or /some-page" hidden>
+      <input name="label" placeholder="Label (optional for pages)">
+      <button class="primary">Add</button>
+    </form>
+  </section>
+{% endfor %}
+</div>
+{% endblock %}

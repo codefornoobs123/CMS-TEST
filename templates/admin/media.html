@@ -1,0 +1,60 @@
+{% extends "admin/base.html" %}
+{% block title %}Media{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>Media <span class="muted">({{ items|length }})</span></h1>
+</div>
+
+{% if has_role('author') %}
+<form method="post" action="{{ url_for('media_upload') }}" enctype="multipart/form-data" class="card upload">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="file" name="file" multiple required accept="image/jpeg,image/png,image/gif,image/webp,application/pdf">
+  <button class="primary">Upload</button>
+  <span class="small muted">JPG, PNG, GIF, WebP or PDF, up to 10 MB each</span>
+</form>
+{% endif %}
+
+{% if items %}
+<div class="media-grid">
+  {% for m in items %}
+  {% set mine = has_role('editor') or (has_role('author') and m.uploaded_by == user.id) %}
+  <div class="media-card">
+    <a href="{{ media_url(m) }}" target="_blank" class="media-thumb">
+      {% if m.mime_type.startswith('image/') %}
+        <img src="{{ media_url(m) }}" alt="{{ m.alt_text or '' }}" loading="lazy">
+      {% else %}
+        <span class="file-icon">PDF</span>
+      {% endif %}
+    </a>
+    <div class="media-info">
+      <div class="filename" title="{{ m.filename }}">{{ m.filename }}</div>
+      <div class="small muted">
+        {% if m.width %}{{ m.width }}×{{ m.height }} · {% endif %}{{ (m.size_bytes / 1024)|round(0)|int }} KB
+        · {{ m.uploader or 'unknown' }}
+      </div>
+      <input class="copy-url small" readonly value="{{ media_url(m) }}" onclick="this.select()" title="Link to this file">
+      {% if mine %}
+      <details>
+        <summary class="small">Edit details</summary>
+        <form method="post" action="{{ url_for('media_update', media_id=m.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label class="small">Alt text (describes the image for screen readers)
+            <input name="alt_text" value="{{ m.alt_text or '' }}"></label>
+          <label class="small">Caption <input name="caption" value="{{ m.caption or '' }}"></label>
+          <button>Save</button>
+        </form>
+        <form method="post" action="{{ url_for('media_delete', media_id=m.id) }}"
+              onsubmit='return confirm({{ ("Delete " ~ m.filename ~ "? Pages using it will show a broken image.")|tojson }})'>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="link danger small">Delete file</button>
+        </form>
+      </details>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">No files yet. Upload images here, or add them straight from the page editor.</p>
+{% endif %}
+{% endblock %}

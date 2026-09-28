@@ -1,0 +1,32 @@
+{% extends "admin/base.html" %}
+{% set is_new = not user_id %}
+{% block title %}{{ 'New user' if is_new else 'Edit user' }}{% endblock %}
+{% block content %}
+<div class="head">
+  <h1>{{ 'New user' if is_new else 'Edit ' ~ (target.display_name or target.username) }}</h1>
+  <a href="{{ url_for('users') }}">← Back to users</a>
+</div>
+
+{# `target` is a user row, or the submitted form after a validation error #}
+{% set active = (target.is_active|string in ['1', 'on']) if target else true %}
+<form method="post" class="card narrow">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label>Display name <input name="display_name" value="{{ target.display_name if target and target.display_name }}"></label>
+  <label>Username <input name="username" value="{{ target.username if target }}" required pattern="[A-Za-z0-9_.\-]{3,30}"></label>
+  <label>Email <input name="email" type="email" value="{{ target.email if target }}" required></label>
+  <label>Role
+    <select name="role_id">
+      {% for r in roles %}
+        <option value="{{ r.id }}" {{ 'selected' if (target and target.role_id|string == r.id|string) or (not target and r.name == 'author') }}>
+          {{ r.name|capitalize }}: {{ r.description }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>{{ 'Password' if is_new else 'New password' }}
+    {% if not is_new %}<span class="muted small">(leave blank to keep the current one)</span>{% endif %}
+    <input name="password" type="password" minlength="8" {{ 'required' if is_new }} autocomplete="new-password"></label>
+  <label class="checkbox"><input type="checkbox" name="is_active" value="1" {{ 'checked' if active }}>
+    Account active <span class="muted small">(untick to block this person from logging in)</span></label>
+  <button class="primary">{{ 'Create user' if is_new else 'Save changes' }}</button>
+</form>
+{% endblock %}

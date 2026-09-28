@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site.site_title }}{% endblock %}</title>
+  {% block meta %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
+</head>
+<body>
+  {% macro menu_link(m) -%}
+    <a href="{{ m.url or (url_for('blog_post', slug=m.slug) if m.type == 'post' else url_for('page', slug=m.slug)) }}">{{ m.label }}</a>
+  {%- endmacro %}
+  <header class="site-header">
+    <div class="wrap">
+      <a class="logo" href="{{ url_for('home') }}">{{ site.site_title }}</a>
+      <nav>
+        {% for m in menu %}{{ menu_link(m) }}{% endfor %}
+        <a href="{{ url_for('blog') }}">Blog</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">{% block content %}{% endblock %}</main>
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>{{ site.site_title }} · {{ site.site_tagline }}</span>
+      {% if footer_menu %}<nav>{% for m in footer_menu %}{{ menu_link(m) }}{% endfor %}</nav>{% endif %}
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{% extends "site/base.html" %}
+{% block title %}Blog · {{ site.site_title }}{% endblock %}
+{% block content %}
+<h1>Blog</h1>
+{% for p in posts %}
+  <article class="summary">
+    {% if p.image_path %}
+      <a href="{{ url_for('blog_post', slug=p.slug) }}"><img class="thumb" src="{{ url_for('static', filename=p.image_path) }}" alt="{{ p.image_alt or '' }}" loading="lazy"></a>
+    {% endif %}
+    <h2><a href="{{ url_for('blog_post', slug=p.slug) }}">{{ p.title }}</a></h2>
+    <p class="meta">{{ p.published_at[:10] }} · {{ p.author }}</p>
+    {% if p.excerpt %}<p>{{ p.excerpt }}</p>{% endif %}
+  </article>
+{% else %}
+  <p>No posts yet.</p>
+{% endfor %}
+<nav class="pager">
+  {% if page_no > 1 %}<a href="{{ url_for('blog', page=page_no - 1) }}">← Newer</a>{% endif %}
+  {% if has_next %}<a href="{{ url_for('blog', page=page_no + 1) }}">Older →</a>{% endif %}
+</nav>
+{% endblock %}
